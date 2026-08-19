@@ -1,5 +1,5 @@
 -- ============================================
--- TELEPORTE LOOP 70ms - BOLINHA FLUTUANTE
+-- TELEPORTE LOOP 70ms - BOLINHA ABRE/FECHA
 -- ============================================
 
 local player = game:GetService("Players").LocalPlayer
@@ -15,28 +15,25 @@ gui.ResetOnSpawn = false
 local loopAtivo = false
 local threadLoop = nil
 local tempoLoop = 0.07
-local uiAberta = true -- UI começa aberta
+local uiAberta = true
 
 -- ============================================
--- BOLINHA FLUTUANTE (BOTÃO REDONDO)
+-- BOLINHA FLUTUANTE (SÓ ISSO É REDONDO)
 -- ============================================
 
 local bolinha = Instance.new("ImageButton")
 bolinha.Size = UDim2.new(0, 55, 0, 55)
-bolinha.Position = UDim2.new(0.9, -27, 0.1, 10) -- Canto superior direito
+bolinha.Position = UDim2.new(0.9, -27, 0.1, 10)
 bolinha.BackgroundColor3 = Color3.fromRGB(255, 50, 50)
 bolinha.BackgroundTransparency = 0.1
 bolinha.BorderSizePixel = 0
-bolinha.Image = "rbxassetid://" -- Deixa vazio pra usar a cor
+bolinha.Image = "rbxassetid://"
 bolinha.Parent = gui
 
--- Deixar redondo (arredondamento)
-local function arredondar(obj)
-    local corner = Instance.new("UICorner")
-    corner.CornerRadius = UDim.new(1, 0)
-    corner.Parent = obj
-end
-arredondar(bolinha)
+-- Deixar a bolinha REDONDA (SÓ ELA)
+local corner = Instance.new("UICorner")
+corner.CornerRadius = UDim.new(1, 0)
+corner.Parent = bolinha
 
 -- Texto da bolinha
 local bolinhaText = Instance.new("TextLabel")
@@ -50,28 +47,24 @@ bolinhaText.TextSize = 28
 bolinhaText.Parent = bolinha
 
 -- ============================================
--- UI PRINCIPAL
+-- UI RETANGULAR (NORMAL, SEM SER REDONDA)
 -- ============================================
 
 local frame = Instance.new("Frame")
-frame.Size = UDim2.new(0, 320, 0, 320)
-frame.Position = UDim2.new(0.5, -160, 0.4, -160)
+frame.Size = UDim2.new(0, 320, 0, 300)
+frame.Position = UDim2.new(0.5, -160, 0.4, -150)
 frame.BackgroundColor3 = Color3.fromRGB(15, 15, 30)
 frame.BackgroundTransparency = 0.1
 frame.BorderSizePixel = 0
 frame.Parent = gui
 
--- Arredondar a UI
-arredondar(frame)
-
--- BARRA DE TÍTULO (ÁREA DE ARRASTE)
+-- BARRA DE TÍTULO
 local titleBar = Instance.new("Frame")
 titleBar.Size = UDim2.new(1, 0, 0, 35)
 titleBar.Position = UDim2.new(0, 0, 0, 0)
 titleBar.BackgroundColor3 = Color3.fromRGB(40, 40, 70)
 titleBar.BorderSizePixel = 0
 titleBar.Parent = frame
-arredondar(titleBar)
 
 -- TÍTULO
 local titulo = Instance.new("TextLabel")
@@ -161,7 +154,7 @@ local function pararLoop()
 end
 
 -- ============================================
--- BOTÕES DA UI
+-- BOTÕES DA UI (RETANGULAR)
 -- ============================================
 
 local function criarBotao(texto, posY, cor, callback)
@@ -175,7 +168,6 @@ local function criarBotao(texto, posY, cor, callback)
     btn.TextSize = 15
     btn.Parent = frame
     btn.MouseButton1Click:Connect(callback)
-    arredondar(btn)
     return btn
 end
 
@@ -187,18 +179,17 @@ criarBotao("❌ FECHAR UI", 175, Color3.fromRGB(80, 80, 80), function()
 end)
 
 -- ============================================
--- FUNÇÃO ABRIR/FECHAR UI PELA BOLINHA
+-- BOLINHA ABRE/FECHA A UI
 -- ============================================
 bolinha.MouseButton1Click:Connect(function()
     uiAberta = not uiAberta
     frame.Visible = uiAberta
     bolinha.BackgroundColor3 = uiAberta and Color3.fromRGB(255, 50, 50) or Color3.fromRGB(0, 200, 0)
-    bolinhaText.Text = uiAberta and "🌀" or "🌀"
-    print(uiAberta and "UI ABERTA" or "UI FECHADA")
+    print(uiAberta and "✅ UI ABERTA" or "❌ UI FECHADA")
 end)
 
 -- ============================================
--- SISTEMA DE ARRASTE (DRAG)
+-- SISTEMA DE ARRASTE (SÓ NA UI)
 -- ============================================
 
 local dragging = false
@@ -246,7 +237,7 @@ titleBar.InputEnded:Connect(function(input)
 end)
 
 -- ============================================
--- ATALHO (L = Ligar/Desligar Loop)
+-- ATALHO L = LOOP
 -- ============================================
 userInput.InputBegan:Connect(function(input, gameProcessed)
     if gameProcessed then return end
@@ -260,7 +251,7 @@ userInput.InputBegan:Connect(function(input, gameProcessed)
     end
 end)
 
-print("✅ SCRIPT CARREGADO! BOLINHA FLUTUANTE!")
-print("📌 Clique na bolinha vermelha para abrir/fechar a UI")
+print("✅ SCRIPT CARREGADO!")
+print("📌 Clique na bolinha para ABRIR/FECHAR a UI")
 print("📌 Pressione L para ligar/desligar o loop")
 print("📌 Arraste a barra azul para mover a UI")
