@@ -1,12 +1,12 @@
 -- ============================================
--- TELEPORTE LOOP 70ms - BOLINHA ABRE/FECHA
+-- KILL ALL (WITH GOJO) - NIKKOLAS HUB
 -- ============================================
 
 local player = game:GetService("Players").LocalPlayer
 local userInput = game:GetService("UserInputService")
 local gui = Instance.new("ScreenGui")
 gui.Parent = player:WaitForChild("PlayerGui")
-gui.Name = "LoopTeleport"
+gui.Name = "NikkolasHub"
 gui.ResetOnSpawn = false
 
 -- ============================================
@@ -27,7 +27,7 @@ bolinha.BackgroundColor3 = Color3.fromRGB(255, 50, 50)
 bolinha.BackgroundTransparency = 0.1
 bolinha.BorderSizePixel = 0
 bolinha.Image = "rbxassetid://"
-bolinha.Visible = false -- COMEÇA OCULTA!
+bolinha.Visible = false
 bolinha.Parent = gui
 
 -- Deixar a bolinha REDONDA
@@ -47,7 +47,7 @@ bolinhaText.TextSize = 28
 bolinhaText.Parent = bolinha
 
 -- ============================================
--- UI PRINCIPAL (COMEÇA ABERTA)
+-- UI PRINCIPAL
 -- ============================================
 
 local frame = Instance.new("Frame")
@@ -66,11 +66,11 @@ titleBar.BackgroundColor3 = Color3.fromRGB(40, 40, 70)
 titleBar.BorderSizePixel = 0
 titleBar.Parent = frame
 
--- TÍTULO
+-- TÍTULO (NIKKOLAS HUB)
 local titulo = Instance.new("TextLabel")
 titulo.Size = UDim2.new(0.8, 0, 1, 0)
 titulo.Position = UDim2.new(0, 10, 0, 0)
-titulo.Text = "🌀 TELEPORTE 70ms"
+titulo.Text = "🔥 NIKKOLAS HUB"
 titulo.TextColor3 = Color3.fromRGB(255, 255, 255)
 titulo.BackgroundTransparency = 1
 titulo.Font = Enum.Font.GothamBold
@@ -91,7 +91,7 @@ statusLabel.TextXAlignment = Enum.TextXAlignment.Left
 statusLabel.Parent = frame
 
 -- ============================================
--- FUNÇÃO DO LOOP
+-- FUNÇÃO DO LOOP (KILL ALL WITH GOJO)
 -- ============================================
 local function iniciarLoop()
     if loopAtivo then 
@@ -100,7 +100,7 @@ local function iniciarLoop()
     end
     
     loopAtivo = true
-    statusLabel.Text = "🔄 Loop: ON (70ms)"
+    statusLabel.Text = "🔄 Kill All: ON (70ms)"
     
     threadLoop = coroutine.create(function()
         local index = 1
@@ -149,7 +149,7 @@ local function pararLoop()
     if loopAtivo then
         loopAtivo = false
         threadLoop = nil
-        statusLabel.Text = "⏹️ Loop: OFF"
+        statusLabel.Text = "⏹️ Kill All: OFF"
     end
 end
 
@@ -187,18 +187,24 @@ local function criarBotao(texto, posY, cor, callback)
     return btn
 end
 
-criarBotao("▶️ INICIAR LOOP (70ms)", 75, Color3.fromRGB(0, 180, 80), iniciarLoop)
-criarBotao("⏹️ PARAR LOOP", 125, Color3.fromRGB(200, 50, 50), pararLoop)
-
--- BOTÃO FECHAR UI (ESCONDE UI E MOSTRA BOLINHA)
-criarBotao("🔴 FECHAR UI", 175, Color3.fromRGB(200, 50, 50), function()
-    fecharUI()
+-- Botão KILL ALL (WITH GOJO)
+criarBotao("🌀 KILL ALL (WITH GOJO)", 75, Color3.fromRGB(200, 50, 50), function()
+    if loopAtivo then
+        pararLoop()
+    else
+        iniciarLoop()
+    end
+    -- Mudar texto do botão dinamicamente
+    local btn = frame:FindFirstChild("TextButton")
+    if btn then
+        btn.Text = loopAtivo and "⏹️ PARAR KILL ALL" or "🌀 KILL ALL (WITH GOJO)"
+        btn.BackgroundColor3 = loopAtivo and Color3.fromRGB(200, 50, 50) or Color3.fromRGB(0, 180, 80)
+    end
 end)
 
--- BOTÃO FECHAR TUDO (MATA O SCRIPT)
-criarBotao("❌ FECHAR TUDO", 225, Color3.fromRGB(80, 80, 80), function()
-    pararLoop()
-    gui:Destroy()
+-- Botão FECHAR UI
+criarBotao("🔴 FECHAR UI", 130, Color3.fromRGB(200, 50, 50), function()
+    fecharUI()
 end)
 
 -- ============================================
@@ -209,50 +215,96 @@ bolinha.MouseButton1Click:Connect(function()
 end)
 
 -- ============================================
--- SISTEMA DE ARRASTE (SÓ NA UI)
+-- SISTEMA DE ARRASTE (UI E BOLINHA)
 -- ============================================
 
-local dragging = false
-local dragStart = nil
-local startPos = nil
+-- Arraste da UI
+local draggingUI = false
+local dragStartUI = nil
+local startPosUI = nil
 
-local function startDrag(input)
-    dragging = true
-    dragStart = input.Position
-    startPos = frame.Position
+local function startDragUI(input)
+    draggingUI = true
+    dragStartUI = input.Position
+    startPosUI = frame.Position
 end
 
-local function updateDrag(input)
-    if not dragging then return end
-    local delta = input.Position - dragStart
+local function updateDragUI(input)
+    if not draggingUI then return end
+    local delta = input.Position - dragStartUI
     frame.Position = UDim2.new(
-        startPos.X.Scale, startPos.X.Offset + delta.X,
-        startPos.Y.Scale, startPos.Y.Offset + delta.Y
+        startPosUI.X.Scale, startPosUI.X.Offset + delta.X,
+        startPosUI.Y.Scale, startPosUI.Y.Offset + delta.Y
     )
 end
 
-local function endDrag()
-    dragging = false
+local function endDragUI()
+    draggingUI = false
 end
 
 titleBar.InputBegan:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.Touch or 
        input.UserInputType == Enum.UserInputType.MouseButton1 then
-        startDrag(input)
+        startDragUI(input)
     end
 end)
 
 titleBar.InputChanged:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.Touch or 
        input.UserInputType == Enum.UserInputType.MouseMovement then
-        updateDrag(input)
+        updateDragUI(input)
     end
 end)
 
 titleBar.InputEnded:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.Touch or 
        input.UserInputType == Enum.UserInputType.MouseButton1 then
-        endDrag()
+        endDragUI()
+    end
+end)
+
+-- Arraste da BOLINHA
+local draggingBolinha = false
+local dragStartBolinha = nil
+local startPosBolinha = nil
+
+local function startDragBolinha(input)
+    draggingBolinha = true
+    dragStartBolinha = input.Position
+    startPosBolinha = bolinha.Position
+end
+
+local function updateDragBolinha(input)
+    if not draggingBolinha then return end
+    local delta = input.Position - dragStartBolinha
+    bolinha.Position = UDim2.new(
+        startPosBolinha.X.Scale, startPosBolinha.X.Offset + delta.X,
+        startPosBolinha.Y.Scale, startPosBolinha.Y.Offset + delta.Y
+    )
+end
+
+local function endDragBolinha()
+    draggingBolinha = false
+end
+
+bolinha.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.Touch or 
+       input.UserInputType == Enum.UserInputType.MouseButton1 then
+        startDragBolinha(input)
+    end
+end)
+
+bolinha.InputChanged:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.Touch or 
+       input.UserInputType == Enum.UserInputType.MouseMovement then
+        updateDragBolinha(input)
+    end
+end)
+
+bolinha.InputEnded:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.Touch or 
+       input.UserInputType == Enum.UserInputType.MouseButton1 then
+        endDragBolinha()
     end
 end)
 
@@ -271,7 +323,8 @@ userInput.InputBegan:Connect(function(input, gameProcessed)
     end
 end)
 
-print("✅ SCRIPT CARREGADO!")
+print("✅ NIKKOLAS HUB CARREGADO!")
 print("📌 Clique em 'FECHAR UI' para esconder a UI e mostrar a bolinha")
 print("📌 Clique na bolinha para reabrir a UI")
-print("📌 Pressione L para ligar/desligar o loop")
+print("📌 Arraste a bolinha ou a UI para mover")
+print("📌 Pressione L para ligar/desligar o Kill All")
