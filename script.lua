@@ -1,5 +1,5 @@
 -- ============================================
--- TELEPORTE LOOP 70ms - UI DRAGÁVEL
+-- TELEPORTE LOOP 70ms - BOLINHA FLUTUANTE
 -- ============================================
 
 local player = game:GetService("Players").LocalPlayer
@@ -7,18 +7,62 @@ local userInput = game:GetService("UserInputService")
 local gui = Instance.new("ScreenGui")
 gui.Parent = player:WaitForChild("PlayerGui")
 gui.Name = "LoopTeleport"
+gui.ResetOnSpawn = false
 
 -- ============================================
--- UI PRINCIPAL (ARRASTÁVEL)
+-- VARIÁVEIS
+-- ============================================
+local loopAtivo = false
+local threadLoop = nil
+local tempoLoop = 0.07
+local uiAberta = true -- UI começa aberta
+
+-- ============================================
+-- BOLINHA FLUTUANTE (BOTÃO REDONDO)
+-- ============================================
+
+local bolinha = Instance.new("ImageButton")
+bolinha.Size = UDim2.new(0, 55, 0, 55)
+bolinha.Position = UDim2.new(0.9, -27, 0.1, 10) -- Canto superior direito
+bolinha.BackgroundColor3 = Color3.fromRGB(255, 50, 50)
+bolinha.BackgroundTransparency = 0.1
+bolinha.BorderSizePixel = 0
+bolinha.Image = "rbxassetid://" -- Deixa vazio pra usar a cor
+bolinha.Parent = gui
+
+-- Deixar redondo (arredondamento)
+local function arredondar(obj)
+    local corner = Instance.new("UICorner")
+    corner.CornerRadius = UDim.new(1, 0)
+    corner.Parent = obj
+end
+arredondar(bolinha)
+
+-- Texto da bolinha
+local bolinhaText = Instance.new("TextLabel")
+bolinhaText.Size = UDim2.new(1, 0, 1, 0)
+bolinhaText.Position = UDim2.new(0, 0, 0, 0)
+bolinhaText.Text = "🌀"
+bolinhaText.TextColor3 = Color3.fromRGB(255, 255, 255)
+bolinhaText.BackgroundTransparency = 1
+bolinhaText.Font = Enum.Font.GothamBold
+bolinhaText.TextSize = 28
+bolinhaText.Parent = bolinha
+
+-- ============================================
+-- UI PRINCIPAL
 -- ============================================
 
 local frame = Instance.new("Frame")
 frame.Size = UDim2.new(0, 320, 0, 320)
-frame.Position = UDim2.new(0.5, -160, 0.5, -160)
+frame.Position = UDim2.new(0.5, -160, 0.4, -160)
 frame.BackgroundColor3 = Color3.fromRGB(15, 15, 30)
 frame.BackgroundTransparency = 0.1
 frame.BorderSizePixel = 0
 frame.Parent = gui
+
+-- Arredondar a UI
+arredondar(frame)
 
 -- BARRA DE TÍTULO (ÁREA DE ARRASTE)
 local titleBar = Instance.new("Frame")
@@ -27,6 +71,7 @@ titleBar.Position = UDim2.new(0, 0, 0, 0)
 titleBar.BackgroundColor3 = Color3.fromRGB(40, 40, 70)
 titleBar.BorderSizePixel = 0
 titleBar.Parent = frame
+arredondar(titleBar)
 
 -- TÍTULO
 local titulo = Instance.new("TextLabel")
@@ -51,13 +96,6 @@ statusLabel.Font = Enum.Font.Gotham
 statusLabel.TextSize = 13
 statusLabel.TextXAlignment = Enum.TextXAlignment.Left
 statusLabel.Parent = frame
-
--- ============================================
--- VARIÁVEIS
--- ============================================
-local loopAtivo = false
-local threadLoop = nil
-local tempoLoop = 0.07 -- 70 MILISSEGUNDOS!
 
 -- ============================================
 -- FUNÇÃO DO LOOP
@@ -107,7 +145,7 @@ local function iniciarLoop()
             end
             
             index = index + 1
-            wait(tempoLoop) -- 70 MILISSEGUNDOS!
+            wait(tempoLoop)
         end
     end)
     
@@ -123,7 +161,7 @@ local function pararLoop()
 end
 
 -- ============================================
--- BOTÕES
+-- BOTÕES DA UI
 -- ============================================
 
 local function criarBotao(texto, posY, cor, callback)
@@ -137,23 +175,26 @@ local function criarBotao(texto, posY, cor, callback)
     btn.TextSize = 15
     btn.Parent = frame
     btn.MouseButton1Click:Connect(callback)
+    arredondar(btn)
     return btn
 end
 
--- Botão INICIAR
-local btnIniciar = criarBotao("▶️ INICIAR LOOP (70ms)", 75, Color3.fromRGB(0, 180, 80), function()
-    iniciarLoop()
-end)
-
--- Botão PARAR
-local btnParar = criarBotao("⏹️ PARAR LOOP", 125, Color3.fromRGB(200, 50, 50), function()
-    pararLoop()
-end)
-
--- Botão FECHAR
+criarBotao("▶️ INICIAR LOOP (70ms)", 75, Color3.fromRGB(0, 180, 80), iniciarLoop)
+criarBotao("⏹️ PARAR LOOP", 125, Color3.fromRGB(200, 50, 50), pararLoop)
 criarBotao("❌ FECHAR UI", 175, Color3.fromRGB(80, 80, 80), function()
     pararLoop()
     gui:Destroy()
+end)
+
+-- ============================================
+-- FUNÇÃO ABRIR/FECHAR UI PELA BOLINHA
+-- ============================================
+bolinha.MouseButton1Click:Connect(function()
+    uiAberta = not uiAberta
+    frame.Visible = uiAberta
+    bolinha.BackgroundColor3 = uiAberta and Color3.fromRGB(255, 50, 50) or Color3.fromRGB(0, 200, 0)
+    bolinhaText.Text = uiAberta and "🌀" or "🌀"
+    print(uiAberta and "UI ABERTA" or "UI FECHADA")
 end)
 
 -- ============================================
@@ -205,7 +246,7 @@ titleBar.InputEnded:Connect(function(input)
 end)
 
 -- ============================================
--- ATALHO (L = Ligar/Desligar)
+-- ATALHO (L = Ligar/Desligar Loop)
 -- ============================================
 userInput.InputBegan:Connect(function(input, gameProcessed)
     if gameProcessed then return end
@@ -219,6 +260,7 @@ userInput.InputBegan:Connect(function(input, gameProcessed)
     end
 end)
 
-print("✅ SCRIPT CARREGADO! TEMPO: 70ms!")
+print("✅ SCRIPT CARREGADO! BOLINHA FLUTUANTE!")
+print("📌 Clique na bolinha vermelha para abrir/fechar a UI")
 print("📌 Pressione L para ligar/desligar o loop")
 print("📌 Arraste a barra azul para mover a UI")
