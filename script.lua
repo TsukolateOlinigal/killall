@@ -15,10 +15,9 @@ gui.ResetOnSpawn = false
 local loopAtivo = false
 local threadLoop = nil
 local tempoLoop = 0.07
-local uiAberta = true
 
 -- ============================================
--- BOLINHA FLUTUANTE (SÓ ISSO É REDONDO)
+-- BOLINHA (COMEÇA OCULTA)
 -- ============================================
 
 local bolinha = Instance.new("ImageButton")
@@ -28,9 +27,10 @@ bolinha.BackgroundColor3 = Color3.fromRGB(255, 50, 50)
 bolinha.BackgroundTransparency = 0.1
 bolinha.BorderSizePixel = 0
 bolinha.Image = "rbxassetid://"
+bolinha.Visible = false -- COMEÇA OCULTA!
 bolinha.Parent = gui
 
--- Deixar a bolinha REDONDA (SÓ ELA)
+-- Deixar a bolinha REDONDA
 local corner = Instance.new("UICorner")
 corner.CornerRadius = UDim.new(1, 0)
 corner.Parent = bolinha
@@ -47,7 +47,7 @@ bolinhaText.TextSize = 28
 bolinhaText.Parent = bolinha
 
 -- ============================================
--- UI RETANGULAR (NORMAL, SEM SER REDONDA)
+-- UI PRINCIPAL (COMEÇA ABERTA)
 -- ============================================
 
 local frame = Instance.new("Frame")
@@ -154,7 +154,23 @@ local function pararLoop()
 end
 
 -- ============================================
--- BOTÕES DA UI (RETANGULAR)
+-- FUNÇÃO ABRIR/FECHAR UI
+-- ============================================
+
+local function fecharUI()
+    frame.Visible = false
+    bolinha.Visible = true
+    print("❌ UI FECHADA - Bolinha apareceu!")
+end
+
+local function abrirUI()
+    frame.Visible = true
+    bolinha.Visible = false
+    print("✅ UI ABERTA - Bolinha escondida!")
+end
+
+-- ============================================
+-- BOTÕES DA UI
 -- ============================================
 
 local function criarBotao(texto, posY, cor, callback)
@@ -173,19 +189,23 @@ end
 
 criarBotao("▶️ INICIAR LOOP (70ms)", 75, Color3.fromRGB(0, 180, 80), iniciarLoop)
 criarBotao("⏹️ PARAR LOOP", 125, Color3.fromRGB(200, 50, 50), pararLoop)
-criarBotao("❌ FECHAR UI", 175, Color3.fromRGB(80, 80, 80), function()
+
+-- BOTÃO FECHAR UI (ESCONDE UI E MOSTRA BOLINHA)
+criarBotao("🔴 FECHAR UI", 175, Color3.fromRGB(200, 50, 50), function()
+    fecharUI()
+end)
+
+-- BOTÃO FECHAR TUDO (MATA O SCRIPT)
+criarBotao("❌ FECHAR TUDO", 225, Color3.fromRGB(80, 80, 80), function()
     pararLoop()
     gui:Destroy()
 end)
 
 -- ============================================
--- BOLINHA ABRE/FECHA A UI
+-- BOLINHA ABRE A UI
 -- ============================================
 bolinha.MouseButton1Click:Connect(function()
-    uiAberta = not uiAberta
-    frame.Visible = uiAberta
-    bolinha.BackgroundColor3 = uiAberta and Color3.fromRGB(255, 50, 50) or Color3.fromRGB(0, 200, 0)
-    print(uiAberta and "✅ UI ABERTA" or "❌ UI FECHADA")
+    abrirUI()
 end)
 
 -- ============================================
@@ -252,6 +272,6 @@ userInput.InputBegan:Connect(function(input, gameProcessed)
 end)
 
 print("✅ SCRIPT CARREGADO!")
-print("📌 Clique na bolinha para ABRIR/FECHAR a UI")
+print("📌 Clique em 'FECHAR UI' para esconder a UI e mostrar a bolinha")
+print("📌 Clique na bolinha para reabrir a UI")
 print("📌 Pressione L para ligar/desligar o loop")
-print("📌 Arraste a barra azul para mover a UI")
