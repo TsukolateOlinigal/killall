@@ -1,5 +1,5 @@
 -- ============================================
--- NIKKOLAS HUB - DELTA EXECUTOR (FLY CORRIGIDO)
+-- NIKKOLAS HUB (FLY = FLYGUI V3)
 -- ============================================
 
 local player = game:GetService("Players").LocalPlayer
@@ -10,37 +10,35 @@ gui.Name = "NikkolasHub"
 gui.ResetOnSpawn = false
 
 -- ============================================
--- VARIÁVEIS
+-- VARIÁVEIS DO KILL ALL
 -- ============================================
 local loopAtivo = false
 local threadLoop = nil
 local tempoLoop = 0.07
-local voando = false
-local flyConn = nil
-local bodyVelocity = nil
-local alturaAtual = 10
+local mortoNoVoid = false
+local esperandoRespawn = false
 
 -- ============================================
 -- NOTIFICAÇÃO
 -- ============================================
 local function notificar(texto, cor)
     local notif = Instance.new("TextLabel")
-    notif.Size = UDim2.new(0, 350, 0, 40)
-    notif.Position = UDim2.new(0.5, -175, 0.2, 0)
+    notif.Size = UDim2.new(0, 400, 0, 40)
+    notif.Position = UDim2.new(0.5, -200, 0.2, 0)
     notif.Text = texto
     notif.TextColor3 = cor
     notif.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
     notif.BackgroundTransparency = 0.5
     notif.BorderSizePixel = 0
     notif.Font = Enum.Font.GothamBold
-    notif.TextSize = 20
+    notif.TextSize = 22
     notif.Parent = gui
-    
+
     local corner = Instance.new("UICorner")
     corner.CornerRadius = UDim.new(0, 10)
     corner.Parent = notif
-    
-    game:GetService("Debris"):AddItem(notif, 2)
+
+    game:GetService("Debris"):AddItem(notif, 3)
 end
 
 -- ============================================
@@ -75,8 +73,8 @@ bolinhaText.Parent = bolinha
 -- ============================================
 
 local frame = Instance.new("Frame")
-frame.Size = UDim2.new(0, 320, 0, 350)
-frame.Position = UDim2.new(0.5, -160, 0.4, -175)
+frame.Size = UDim2.new(0, 320, 0, 370)
+frame.Position = UDim2.new(0.5, -160, 0.4, -185)
 frame.BackgroundColor3 = Color3.fromRGB(15, 15, 30)
 frame.BackgroundTransparency = 0.1
 frame.BorderSizePixel = 0
@@ -92,7 +90,7 @@ titleBar.Parent = frame
 local titulo = Instance.new("TextLabel")
 titulo.Size = UDim2.new(0.8, 0, 1, 0)
 titulo.Position = UDim2.new(0, 10, 0, 0)
-titulo.Text = "🔥 NIKKOLAS HUB (DELTA)"
+titulo.Text = "🔥 NIKKOLAS HUB"
 titulo.TextColor3 = Color3.fromRGB(255, 255, 255)
 titulo.BackgroundTransparency = 1
 titulo.Font = Enum.Font.GothamBold
@@ -110,91 +108,6 @@ statusLabel.Font = Enum.Font.Gotham
 statusLabel.TextSize = 13
 statusLabel.TextXAlignment = Enum.TextXAlignment.Left
 statusLabel.Parent = frame
-
--- ============================================
--- FUNÇÃO FLY (ADAPTADA PARA DELTA)
--- ============================================
-local function ativarFly()
-    local character = player.Character
-    if not character then
-        notificar("❌ Personagem não encontrado!", Color3.fromRGB(255, 0, 0))
-        return
-    end
-
-    local humanoid = character:FindFirstChild("Humanoid")
-    local rootPart = character:FindFirstChild("HumanoidRootPart")
-    
-    if not humanoid or not rootPart then
-        notificar("❌ Erro ao ativar fly!", Color3.fromRGB(255, 0, 0))
-        return
-    end
-
-    if voando then
-        voando = false
-        if flyConn then
-            flyConn:Disconnect()
-            flyConn = nil
-        end
-        if bodyVelocity then
-            bodyVelocity:Destroy()
-            bodyVelocity = nil
-        end
-        humanoid.PlatformStand = false
-        statusLabel.Text = "✈️ Fly: OFF"
-        notificar("✈️ Fly DESATIVADO", Color3.fromRGB(255, 255, 255))
-        return
-    end
-
-    voando = true
-    humanoid.PlatformStand = true
-    statusLabel.Text = "✈️ Fly: ON"
-    notificar("✈️ Fly ATIVADO (DELTA)", Color3.fromRGB(0, 255, 255))
-    
-    alturaAtual = rootPart.Position.Y
-
-    -- BodyVelocity (mais compatível com Delta)
-    bodyVelocity = Instance.new("BodyVelocity")
-    bodyVelocity.MaxForce = Vector3.new(4000, 4000, 4000)
-    bodyVelocity.Velocity = Vector3.new(0, 0, 0)
-    bodyVelocity.Parent = rootPart
-
-    flyConn = game:GetService("RunService").Heartbeat:Connect(function()
-        if not voando or not character or not rootPart or not bodyVelocity then
-            return
-        end
-
-        local moveDirection = Vector3.new(0, 0, 0)
-        local speed = 50
-
-        if userInput:IsKeyDown(Enum.KeyCode.W) then moveDirection = moveDirection + Vector3.new(0, 0, -speed) end
-        if userInput:IsKeyDown(Enum.KeyCode.S) then moveDirection = moveDirection + Vector3.new(0, 0, speed) end
-        if userInput:IsKeyDown(Enum.KeyCode.A) then moveDirection = moveDirection + Vector3.new(-speed, 0, 0) end
-        if userInput:IsKeyDown(Enum.KeyCode.D) then moveDirection = moveDirection + Vector3.new(speed, 0, 0) end
-        if userInput:IsKeyDown(Enum.KeyCode.Space) then 
-            alturaAtual = alturaAtual + 2
-        end
-        if userInput:IsKeyDown(Enum.KeyCode.LeftShift) then 
-            alturaAtual = alturaAtual - 2
-        end
-
-        if moveDirection ~= Vector3.new(0, 0, 0) then
-            local camera = workspace.CurrentCamera
-            if camera then
-                local camCF = camera.CFrame
-                local forward = camCF.LookVector
-                local right = camCF.RightVector
-                local up = camCF.UpVector
-
-                local moveCF = CFrame.new(Vector3.new(0, 0, 0), 
-                    forward * moveDirection.Z + right * moveDirection.X + up * moveDirection.Y)
-
-                bodyVelocity.Velocity = moveCF.Position * 0.5
-            end
-        else
-            bodyVelocity.Velocity = Vector3.new(0, 0, 0)
-        end
-    end)
-end
 
 -- ============================================
 -- FUNÇÃO KILL ALL
@@ -263,7 +176,7 @@ local function pararLoop()
 end
 
 -- ============================================
--- FUNÇÃO BYPASS TESTE
+-- FUNÇÃO TESTE BYPASS
 -- ============================================
 local function testarBypass()
     local character = player.Character
@@ -303,7 +216,7 @@ local function testarBypass()
     local charAlvo = alvo.Character
     if charAlvo and charAlvo:FindFirstChild("HumanoidRootPart") then
         rootPart.CFrame = charAlvo.HumanoidRootPart.CFrame + Vector3.new(0, 5, 0)
-        notificar("🧪 BYPASS: Teleportado para " .. alvo.Name, Color3.fromRGB(0, 255, 255))
+        notificar("🧪 TESTE BYPASS: Teleportado para " .. alvo.Name, Color3.fromRGB(0, 255, 255))
         statusLabel.Text = "🧪 Teste: " .. alvo.Name
     end
 end
@@ -322,7 +235,54 @@ local function verificarVoid()
     if not humanoid then return end
 
     if rootPart.Position.Y < -30 and humanoid.Health <= 0 then
-        print("💀 MORREU NO VOID! Teleportando...")
+        if mortoNoVoid then return end
+        mortoNoVoid = true
+        esperandoRespawn = true
+        
+        print("💀 MORREU NO VOID! Aguardando respawn...")
+        notificar("💀 Morreu no void! Aguardando respawn...", Color3.fromRGB(255, 255, 0))
+    end
+end
+
+local function detectarRespawnETeleportar()
+    if not esperandoRespawn then return end
+    
+    local character = player.Character
+    if not character then 
+        return 
+    end
+
+    local rootPart = character:FindFirstChild("HumanoidRootPart")
+    if not rootPart then 
+        return 
+    end
+
+    local humanoid = character:FindFirstChild("Humanoid")
+    if not humanoid then 
+        return 
+    end
+
+    if humanoid.Health <= 0 then
+        return
+    end
+
+    local altura = rootPart.Position.Y
+    local spawnDetectado = false
+    
+    if altura > 0 and altura < 30 then
+        spawnDetectado = true
+    end
+    
+    if humanoid.Health >= 100 and altura < 50 then
+        spawnDetectado = true
+    end
+    
+    if altura < 20 then
+        spawnDetectado = true
+    end
+    
+    if spawnDetectado then
+        print("🔄 RESPAWN DETECTADO! Tentando teleportar...")
         
         local playersList = {}
         for _, p in pairs(game:GetService("Players"):GetPlayers()) do
@@ -333,34 +293,43 @@ local function verificarVoid()
                 end
             end
         end
-
+        
         if #playersList > 0 then
             local alvo = playersList[math.random(1, #playersList)]
             local charAlvo = alvo.Character
             if charAlvo and charAlvo:FindFirstChild("HumanoidRootPart") then
-                humanoid.Health = 100
                 rootPart.CFrame = charAlvo.HumanoidRootPart.CFrame + Vector3.new(0, 5, 0)
                 notificar("✅ BYPASS SUCEDIDO! Teleportado para: " .. alvo.Name, Color3.fromRGB(0, 255, 0))
+                esperandoRespawn = false
+                mortoNoVoid = false
+                return
             end
         else
-            humanoid.Health = 100
-            rootPart.CFrame = CFrame.new(0, 50, 0)
-            notificar("❌ BYPASS NÃO SUCEDIDO! Spawn point.", Color3.fromRGB(255, 0, 0))
+            notificar("❌ Nenhum player disponível.", Color3.fromRGB(255, 0, 0))
+            esperandoRespawn = false
+            mortoNoVoid = false
+            return
         end
     end
 end
 
+-- ============================================
+-- DETECTOR DE RESPAWN
+-- ============================================
 game:GetService("RunService").Heartbeat:Connect(function()
     verificarVoid()
+    if esperandoRespawn then
+        detectarRespawnETeleportar()
+    end
 end)
 
 -- ============================================
--- BOTÕES
+-- BOTÕES DA UI
 -- ============================================
 
 local function criarBotao(texto, posY, cor, callback)
     local btn = Instance.new("TextButton")
-    btn.Size = UDim2.new(0.85, 0, 0, 36)
+    btn.Size = UDim2.new(0.85, 0, 0, 38)
     btn.Position = UDim2.new(0.075, 0, 0, posY)
     btn.Text = texto
     btn.TextColor3 = Color3.fromRGB(255, 255, 255)
@@ -372,7 +341,8 @@ local function criarBotao(texto, posY, cor, callback)
     return btn
 end
 
-local btnKill = criarBotao("🌀 KILL ALL", 75, Color3.fromRGB(200, 50, 50), function()
+-- Botão KILL ALL
+local btnKill = criarBotao("🌀 KILL ALL", 80, Color3.fromRGB(200, 50, 50), function()
     if loopAtivo then
         pararLoop()
         btnKill.Text = "🌀 KILL ALL"
@@ -384,17 +354,19 @@ local btnKill = criarBotao("🌀 KILL ALL", 75, Color3.fromRGB(200, 50, 50), fun
     end
 end)
 
-local btnFly = criarBotao("✈️ FLY (DELTA)", 120, Color3.fromRGB(0, 150, 255), function()
-    ativarFly()
-    btnFly.Text = voando and "✈️ FLY: ON" or "✈️ FLY (DELTA)"
-    btnFly.BackgroundColor3 = voando and Color3.fromRGB(200, 50, 50) or Color3.fromRGB(0, 150, 255)
+-- 🚀 BOTÃO FLY (EXECUTA O FLYGUI V3)
+local btnFly = criarBotao("✈️ FLY (FLYGUI V3)", 130, Color3.fromRGB(0, 150, 255), function()
+    notificar("🚀 Carregando FLYGUI V3...", Color3.fromRGB(255, 255, 0))
+    loadstring(game:HttpGet("https://raw.githubusercontent.com/XNEOFF/FlyGuiV3/main/FlyGuiV3.txt"))()
 end)
 
-criarBotao("🧪 TESTE BYPASS", 165, Color3.fromRGB(255, 150, 0), function()
+-- Botão TESTE BYPASS
+criarBotao("🧪 TESTE BYPASS", 180, Color3.fromRGB(255, 150, 0), function()
     testarBypass()
 end)
 
-criarBotao("🔴 FECHAR UI", 210, Color3.fromRGB(200, 50, 50), function()
+-- Botão FECHAR UI
+criarBotao("🔴 FECHAR UI", 230, Color3.fromRGB(200, 50, 50), function()
     frame.Visible = false
     bolinha.Visible = true
 end)
@@ -476,12 +448,11 @@ userInput.InputBegan:Connect(function(input, gameProcessed)
             btnKill.Text = "⏹️ PARAR"
             btnKill.BackgroundColor3 = Color3.fromRGB(0, 180, 80)
         end
-    elseif input.KeyCode == Enum.KeyCode.F then
-        ativarFly()
-        btnFly.Text = voando and "✈️ FLY: ON" or "✈️ FLY (DELTA)"
-        btnFly.BackgroundColor3 = voando and Color3.fromRGB(200, 50, 50) or Color3.fromRGB(0, 150, 255)
     end
 end)
 
-print("✅ NIKKOLAS HUB CARREGADO (DELTA)!")
-print("📌 L = Kill All | F = Fly")
+print("✅ NIKKOLAS HUB CARREGADO!")
+print("📌 L = Kill All")
+print("📌 🚀 Botão FLY = Executa o FLYGUI V3")
+print("📌 🧪 TESTE BYPASS = Teleporta pra um player aleatório")
+print("📌 💀 VOID BYPASS = Morreu no void, respawnou, teleportou!")
