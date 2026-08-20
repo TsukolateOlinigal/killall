@@ -1,0 +1,315 @@
+-- ============================================
+-- ORBIT LOCK-ON FIXO (VEL 1 + PARA AO MORRER)
+-- ============================================
+
+local player = game:GetService("Players").LocalPlayer
+local gui = Instance.new("ScreenGui")
+gui.Parent = player:WaitForChild("PlayerGui")
+gui.Name = "OrbitGui"
+
+-- ============================================
+-- VARIÁVEIS
+-- ============================================
+local orbitando = false
+local conexaoOrbit = nil
+local alvoFixo = nil
+local angulo = 0
+local distancia = 5
+local velocidade = 1 -- 🔥 VELOCIDADE AUMENTADA PARA 1
+
+-- ============================================
+-- BOLINHA 🇧🇷
+-- ============================================
+local bolinha = Instance.new("ImageButton")
+bolinha.Size = UDim2.new(0, 55, 0, 55)
+bolinha.Position = UDim2.new(0.9, -27, 0.1, 10)
+bolinha.BackgroundColor3 = Color3.fromRGB(255, 50, 50)
+bolinha.BackgroundTransparency = 0.1
+bolinha.BorderSizePixel = 0
+bolinha.Image = "rbxassetid://"
+bolinha.Parent = gui
+
+local bolinhaText = Instance.new("TextLabel")
+bolinhaText.Size = UDim2.new(1, 0, 1, 0)
+bolinhaText.Position = UDim2.new(0, 0, 0, 0)
+bolinhaText.Text = "🇧🇷"
+bolinhaText.TextColor3 = Color3.fromRGB(255, 255, 255)
+bolinhaText.BackgroundTransparency = 1
+bolinhaText.Font = Enum.Font.GothamBold
+bolinhaText.TextSize = 30
+bolinhaText.Parent = bolinha
+
+-- ============================================
+-- UI PRINCIPAL
+-- ============================================
+
+local frame = Instance.new("Frame")
+frame.Size = UDim2.new(0, 220, 0, 150)
+frame.Position = UDim2.new(0.5, -110, 0.5, -75)
+frame.BackgroundColor3 = Color3.fromRGB(20, 20, 40)
+frame.BackgroundTransparency = 0.1
+frame.BorderSizePixel = 1
+frame.BorderColor3 = Color3.fromRGB(60, 60, 100)
+frame.Visible = false
+frame.Parent = gui
+
+local titleBar = Instance.new("Frame")
+titleBar.Size = UDim2.new(1, 0, 0, 35)
+titleBar.Position = UDim2.new(0, 0, 0, 0)
+titleBar.BackgroundColor3 = Color3.fromRGB(40, 40, 70)
+titleBar.BorderSizePixel = 1
+titleBar.BorderColor3 = Color3.fromRGB(60, 60, 100)
+titleBar.Parent = frame
+
+local titulo = Instance.new("TextLabel")
+titulo.Size = UDim2.new(0.8, 0, 1, 0)
+titulo.Position = UDim2.new(0, 10, 0, 0)
+titulo.Text = "🌀 ORBIT LOCK"
+titulo.TextColor3 = Color3.fromRGB(255, 255, 255)
+titulo.BackgroundTransparency = 1
+titulo.Font = Enum.Font.GothamBold
+titulo.TextSize = 16
+titulo.TextXAlignment = Enum.TextXAlignment.Left
+titulo.Parent = titleBar
+
+local statusLabel = Instance.new("TextLabel")
+statusLabel.Size = UDim2.new(1, -20, 0, 25)
+statusLabel.Position = UDim2.new(0, 10, 0, 42)
+statusLabel.Text = "🔴 Orbit: OFF"
+statusLabel.TextColor3 = Color3.fromRGB(200, 200, 200)
+statusLabel.BackgroundTransparency = 1
+statusLabel.Font = Enum.Font.Gotham
+statusLabel.TextSize = 14
+statusLabel.TextXAlignment = Enum.TextXAlignment.Left
+statusLabel.Parent = frame
+
+-- ============================================
+-- FUNÇÃO PARA ATIVAR/DESATIVAR ORBIT
+-- ============================================
+local function alternarOrbit()
+    -- SE JÁ ESTIVER ORBITANDO, DESLIGA
+    if orbitando then
+        orbitando = false
+        if conexaoOrbit then
+            conexaoOrbit:Disconnect()
+            conexaoOrbit = nil
+        end
+        alvoFixo = nil
+        angulo = 0
+        statusLabel.Text = "🔴 Orbit: OFF"
+        print("🌀 Orbit DESATIVADO")
+        return
+    end
+
+    -- PEGA O PERSONAGEM DO JOGADOR
+    local character = player.Character
+    if not character then
+        statusLabel.Text = "🔴 Sem personagem"
+        print("❌ Personagem não encontrado!")
+        return
+    end
+
+    -- PEGA O ROOT PART
+    local rootPart = character:FindFirstChild("HumanoidRootPart")
+    if not rootPart then
+        statusLabel.Text = "🔴 Sem RootPart"
+        print("❌ RootPart não encontrado!")
+        return
+    end
+
+    -- PROCURA O PLAYER MAIS PRÓXIMO
+    local closest = nil
+    local closestDist = math.huge
+
+    for _, p in pairs(game:GetService("Players"):GetPlayers()) do
+        if p ~= player then
+            local char = p.Character
+            if char and char:FindFirstChild("HumanoidRootPart") then
+                local targetRoot = char.HumanoidRootPart
+                local dist = (rootPart.Position - targetRoot.Position).Magnitude
+                if dist < closestDist then
+                    closestDist = dist
+                    closest = p
+                end
+            end
+        end
+    end
+
+    if not closest then
+        statusLabel.Text = "🔴 Nenhum player"
+        print("❌ Nenhum player próximo!")
+        return
+    end
+
+    -- FIXA O ALVO
+    alvoFixo = closest
+    orbitando = true
+    angulo = 0
+    statusLabel.Text = "🟢 Orbit: " .. alvoFixo.Name .. " (🔒)"
+    print("🌀 Orbitando em: " .. alvoFixo.Name)
+
+    -- LOOP DA ÓRBITA
+    conexaoOrbit = game:GetService("RunService").Heartbeat:Connect(function()
+        if not orbitando then
+            if conexaoOrbit then
+                conexaoOrbit:Disconnect()
+                conexaoOrbit = nil
+            end
+            return
+        end
+
+        -- VERIFICA SE O ALVO AINDA EXISTE
+        if not alvoFixo then
+            statusLabel.Text = "🔴 Alvo perdido"
+            orbitando = false
+            return
+        end
+
+        local char = player.Character
+        if not char then return end
+
+        local root = char:FindFirstChild("HumanoidRootPart")
+        if not root then return end
+
+        local targetChar = alvoFixo.Character
+        
+        -- 🔥 SE O ALVO MORREU OU SAIU, PARA A ÓRBITA
+        if not targetChar then
+            statusLabel.Text = "🔴 Alvo morreu!"
+            print("💀 Alvo morreu! Parando órbita...")
+            orbitando = false
+            if conexaoOrbit then
+                conexaoOrbit:Disconnect()
+                conexaoOrbit = nil
+            end
+            alvoFixo = nil
+            angulo = 0
+            return
+        end
+
+        local targetRoot = targetChar:FindFirstChild("HumanoidRootPart")
+        if not targetRoot then return end
+
+        -- CALCULA A NOVA POSIÇÃO DA ÓRBITA
+        angulo = angulo + velocidade * 0.1
+        local x = targetRoot.Position.X + math.cos(angulo) * distancia
+        local z = targetRoot.Position.Z + math.sin(angulo) * distancia
+        local y = targetRoot.Position.Y
+
+        -- APLICA A POSIÇÃO
+        root.CFrame = CFrame.new(x, y, z)
+
+        -- FAZ O PERSONAGEM OLHAR PARA O ALVO
+        local direcao = (targetRoot.Position - root.Position).Unit
+        root.CFrame = CFrame.lookAt(root.Position, root.Position + direcao)
+    end)
+end
+
+-- ============================================
+-- BOTÕES DA UI
+-- ============================================
+
+local function criarBotao(texto, posY, cor, callback)
+    local btn = Instance.new("TextButton")
+    btn.Size = UDim2.new(0.85, 0, 0, 35)
+    btn.Position = UDim2.new(0.075, 0, 0, posY)
+    btn.Text = texto
+    btn.TextColor3 = Color3.fromRGB(255, 255, 255)
+    btn.BackgroundColor3 = cor
+    btn.BackgroundTransparency = 0.2
+    btn.BorderSizePixel = 0
+    btn.Font = Enum.Font.Gotham
+    btn.TextSize = 14
+    btn.Parent = frame
+    btn.MouseButton1Click:Connect(callback)
+    return btn
+end
+
+criarBotao("🌀 ATIVAR ORBIT", 80, Color3.fromRGB(0, 150, 255), alternarOrbit)
+
+criarBotao("🔴 FECHAR", 125, Color3.fromRGB(200, 50, 50), function()
+    if conexaoOrbit then conexaoOrbit:Disconnect() end
+    gui:Destroy()
+end)
+
+-- ============================================
+-- ABRIR/FECHAR UI PELA BOLINHA
+-- ============================================
+bolinha.MouseButton1Click:Connect(function()
+    frame.Visible = not frame.Visible
+end)
+
+-- ============================================
+-- ARRASTE DA UI
+-- ============================================
+
+local dragging = false
+local dragStart = nil
+local startPos = nil
+
+titleBar.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.Touch or
+       input.UserInputType == Enum.UserInputType.MouseButton1 then
+        dragging = true
+        dragStart = input.Position
+        startPos = frame.Position
+    end
+end)
+
+titleBar.InputChanged:Connect(function(input)
+    if not dragging then return end
+    local delta = input.Position - dragStart
+    frame.Position = UDim2.new(
+        startPos.X.Scale, startPos.X.Offset + delta.X,
+        startPos.Y.Scale, startPos.Y.Offset + delta.Y
+    )
+end)
+
+titleBar.InputEnded:Connect(function()
+    dragging = false
+end)
+
+-- ============================================
+-- ARRASTE DA BOLINHA
+-- ============================================
+
+local draggingB = false
+local dragStartB = nil
+local startPosB = nil
+
+bolinha.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.Touch or
+       input.UserInputType == Enum.UserInputType.MouseButton1 then
+        draggingB = true
+        dragStartB = input.Position
+        startPosB = bolinha.Position
+    end
+end)
+
+bolinha.InputChanged:Connect(function(input)
+    if not draggingB then return end
+    local delta = input.Position - dragStartB
+    bolinha.Position = UDim2.new(
+        startPosB.X.Scale, startPosB.X.Offset + delta.X,
+        startPosB.Y.Scale, startPosB.Y.Offset + delta.Y
+    )
+end)
+
+bolinha.InputEnded:Connect(function()
+    draggingB = false
+end)
+
+-- ============================================
+-- ATALHO (TECLA O)
+-- ============================================
+game:GetService("UserInputService").InputBegan:Connect(function(input, gameProcessed)
+    if gameProcessed then return end
+    if input.KeyCode == Enum.KeyCode.O then
+        alternarOrbit()
+    end
+end)
+
+print("✅ ORBIT LOCK-ON CARREGADO!")
+print("📌 Clique na bolinha 🇧🇷 para abrir a UI")
+print("📌 Clique em ATIVAR ORBIT ou pressione O")
+print("📌 Velocidade: 1 | Para automaticamente quando o alvo morrer")
